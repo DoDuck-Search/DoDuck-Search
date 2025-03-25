@@ -3,82 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DoDuck Search Engine</title>
+    <title>DoDuck Search Results</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
             background: #f8f9fa;
-            text-align: center;
         }
+
         .header {
-            background: #f2f2f2;
-            padding: 10px;
+            padding: 15px;
+            text-align: center;
+            background: white;
+            border-bottom: 1px solid #ddd;
         }
+
         .logo {
-            font-size: 24px;
+            font-size: 36px;
             font-weight: bold;
+            color: #333;
         }
+
         .search-container {
-            width: 100%;
+            position: relative;
+            width: 95%;
             max-width: 600px;
-            margin: 20px auto;
+            margin: 10px auto;
         }
-        .search-bar {
+
+        .search-input {
+            width: 100%;
+            height: 40px;
+            padding: 0 90px 0 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            background-color: #fff;
+        }
+
+        .icons {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
             display: flex;
             align-items: center;
-            background: white;
-            border-radius: 6px;
-            padding: 5px;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+            gap: 10px;
         }
-        .search-bar input {
-            flex: 1;
-            border: none;
-            outline: none;
-            font-size: 16px;
-            padding: 10px;
-        }
-        .search-bar button {
-            background: none;
-            border: none;
+
+        .icon {
+            width: 24px;
+            height: 24px;
             cursor: pointer;
-            padding: 8px;
+            opacity: 0.8;
         }
-        .search-bar button img {
-            width: 20px;
-            height: 20px;
+
+        .icon:hover {
+            opacity: 1;
         }
+
         .results {
             max-width: 800px;
             margin: 20px auto;
             background: white;
             padding: 10px;
-            border-radius: 6px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
+
         .result-item {
-            padding: 12px;
+            margin-bottom: 15px;
+            padding: 10px;
             border-bottom: 1px solid #ddd;
-            text-align: left;
         }
+
         .result-item a {
             font-size: 18px;
-            font-weight: bold;
             color: #1a0dab;
             text-decoration: none;
         }
+
         .result-item a:hover {
             text-decoration: underline;
         }
+
         .result-url {
             font-size: 14px;
             color: #006621;
-            margin-bottom: 4px;
         }
-        .result-description {
+
+        .result-snippet {
             font-size: 14px;
-            color: #545454;
+            color: #333;
         }
     </style>
 </head>
@@ -87,52 +108,83 @@
     <div class="header">
         <div class="logo">DoDuck</div>
         <div class="search-container">
-            <form id="searchForm">
-                <div class="search-bar">
-                    <input type="text" id="searchInput" placeholder="Search on DoDuck" required>
-                    <button type="submit">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Search_Icon.svg" alt="Search">
-                    </button>
-                </div>
-            </form>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search..." required>
+            <div class="icons">
+                <svg id="searchIcon" class="icon search-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 2a8 8 0 1 1-5.29 14.29l-4.1 4.1a1 1 0 0 1-1.41-1.41l4.1-4.1A8 8 0 0 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/>
+                </svg>
+            </div>
         </div>
     </div>
 
     <div class="results" id="results">
-        <p>Type something to see results...</p>
+        <p>Type a search query and press the search icon.</p>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const urlParams = new URLSearchParams(window.location.search);
-            const query = urlParams.get("q");
+<script>
+     const API_KEYS = [
+            "AIzaSyA16DCtOqLYkwGU6xHqWjdIXoKxiwlCmmQ",
+            "AIzaSyAe6_BrizzUzHwOh02WT2Y2TtGked2ffVY",
+            "AIzaSyAvzxKzc8e1zlztwRUPaYd3LrepPkCmDHw",
+            "YOUR_API_KEY_4",
+            "YOUR_API_KEY_5",
+            "YOUR_API_KEY_6",
+            "YOUR_API_KEY_7",
+            "YOUR_API_KEY_8",
+            "YOUR_API_KEY_9",
+            "YOUR_API_KEY_10"
+        ];
+        
+        const CSE_ID = "42904d739adf44d96";
+        let currentKeyIndex = 0;
 
-            if (query) {
-                document.getElementById("searchInput").value = query;
-                fetchResults(query);
+    function fetchResults(query) {
+        let currentKeyIndex = 0;
+        const resultsContainer = document.getElementById("results");
+        resultsContainer.innerHTML = "<p>Searching...</p>";
+
+        function fetchFromAPI() {
+            if (currentKeyIndex >= apiKeys.length) {
+                resultsContainer.innerHTML = "<p>Failed to fetch results. Try again later.</p>";
+                return;
             }
-        });
 
-        document.getElementById("searchForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            const query = document.getElementById("searchInput").value;
-            window.location.href = `rs.html?q=${encodeURIComponent(query)}`;
-        });
+            const apiKey = apiKeys[currentKeyIndex];
+            const apiUrl = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${cseId}&key=${apiKey}`;
 
-        async function fetchResults(query) {
-            if (!query) return;
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.items) {
+                        resultsContainer.innerHTML = data.items.map(item => `
+                            <div class="result-item">
+                                <a href="${item.link}" target="_blank">${item.title}</a>
+                                <div class="result-url">${item.displayLink}</div>
+                                <div class="result-snippet">${item.snippet}</div>
+                            </div>
+                        `).join("");
+                    } else {
+                        currentKeyIndex++;
+                        fetchFromAPI();
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching results:", error);
+                    currentKeyIndex++;
+                    fetchFromAPI();
+                });
+        }
 
-            document.getElementById("results").innerHTML = "<p>Loading results...</p>";
+        fetchFromAPI();
+    }
 
-            const duckDuckGoURL = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json`;
-            const wikiURL = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+    document.getElementById("searchIcon").addEventListener("click", function() {
+        const query = document.getElementById("searchInput").value;
+        if (query) {
+            fetchResults(query);
+        }
+    });
+</script>
 
-            try {
-                const [ddgResponse, wikiResponse] = await Promise.all([
-                    fetch(duckDuckGoURL).then(res => res.json()),
-                    fetch(wikiURL).then(res => res.json())
-                ]);
-
-                displayResults(ddgResponse, wikiResponse);
-            } catch (error) {
-                document.getElementById("results").innerHTML = "<p>Error fetching results. Try again
+</body>
+</html>
